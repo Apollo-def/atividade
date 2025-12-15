@@ -1,0 +1,13 @@
+{
+  "name": "atividade-revisao-arrow-async",
+  "version": "1.0.0",
+  "description": "Atividade de revisão sobre Arrow Functions e Funções Assíncronas",
+  "main": "serve.js",
+  "scripts": {
+    "start": "node serve.js",
+    "test": "node test_services.js"
+  },
+  "keywords": ["javascript", "async", "arrow-functions", "atividade"],
+  "author": "",
+  "license": "MIT"
+}

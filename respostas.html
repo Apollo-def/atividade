@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Respostas - Atividade Arrow & Async</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;max-width:980px;margin:20px}
+    #content{padding:16px;border:1px solid #ddd;background:#fff}
+    pre{background:#f6f8fa;padding:12px;overflow:auto}
+    code{background:#f0f0f0;padding:2px 4px;border-radius:4px}
+    .controls{margin-bottom:12px}
+    a.small{font-size:0.9em}
+  </style>
+</head>
+<body>
+  <h1>Respostas — Atividade: Arrow Functions & Async</h1>
+  <div class="controls">
+    <button id="btnLoad">Carregar respostas</button>
+    <button id="btnClear">Limpar</button>
+    <a class="small" id="rawLink" href="respostas.md" target="_blank">Abrir Markdown (raw)</a>
+  </div>
+
+  <div id="content">Carregando respostas...</div>
+
+  <script>
+    const esc = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    function parseMarkdown(md){
+      const lines = md.replace(/\r/g,'').split('\n');
+      let html = '';
+      let inList = false;
+      let inCode = false;
+      let codeBuf = [];
+
+      const closeCode = () => {
+        if(!inCode) return '';
+        inCode = false;
+        const content = esc(codeBuf.join('\n'));
+        codeBuf = [];
+        return `<pre><code>${content}</code></pre>`;
+      };
+
+      for(let raw of lines){
+        const line = raw;
+        if(line.startsWith('```')){
+          if(inCode){ html += closeCode(); } else { inCode = true; codeBuf = []; }
+          continue;
+        }
+        if(inCode){ codeBuf.push(line); continue; }
+
+        if(/^#{1,6}\s/.test(line)){
+          const m = line.match(/^(#{1,6})\s+(.*)$/);
+          const level = m[1].length; const txt = esc(m[2]);
+          if(inList){ html += '</ul>'; inList = false; }
+          html += `<h${level}>${txt}</h${level}>`;
+          continue;
+        }
+
+        if(/^[-*+]\s+/.test(line)){
+          const item = esc(line.replace(/^[-*+]\s+/,''));
+          if(!inList){ html += '<ul>'; inList = true; }
+          html += `<li>${item}</li>`;
+          continue;
+        }
+
+          if(line.trim() === ''){
+            if(inList){ html += '</ul>'; inList = false; }
+            continue;
+          }
+
+          const inline = esc(line).replace(/`([^`]+)`/g, '<code>$1</code>');
+          if(inList){
+            html += '</ul>'; inList = false;
+          }
+          html += `<p>${inline}</p>`;
+      }
+
+      if(inCode) html += closeCode();
+      if(inList) html += '</ul>';
+      return html;
+    }
+
+    const content = document.getElementById('content');
+    async function loadResponses(){
+      try{
+        const r = await fetch('respostas.md');
+        if(!r.ok) throw new Error('Falha ao carregar arquivo');
+        const txt = await r.text();
+        content.innerHTML = parseMarkdown(txt);
+      } catch(e){ content.innerHTML = `<pre>Erro: ${e.message}</pre>`; }
+    }
+
+    document.getElementById('btnLoad').addEventListener('click', () => loadResponses());
+    window.addEventListener('DOMContentLoaded', () => {
+      loadResponses();
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      content.innerHTML = 'Clique em "Carregar respostas" para ver as respostas formatadas.';
+    });
+  </script>
+</body>
+</html>
